@@ -44,9 +44,9 @@ if (taxableIncome <= 50000) {
 } else {
   quebecTaxRate = 0.20;
 }
-const federalTax = income * federalTaxRate;
+const federalTax = taxableIncome * federalTaxRate;
 
-const quebecTax = income * quebecTaxRate;
+const quebecTax = taxableIncome * quebecTaxRate;
 
   const totalTax = federalTax + quebecTax;
 
@@ -111,7 +111,7 @@ taxSavings,
 
 {results && (
   <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-3 text-lg">
-    <p className="flex justify-between">
+
       <p className="flex justify-between">
   <span>RRSP Contribution</span>
   <span>{formatCurrency(results.rrspContribution)}</span>
@@ -121,6 +121,8 @@ taxSavings,
   <span>Taxable Income</span>
   <span>{formatCurrency(results.taxableIncome)}</span>
 </p>
+
+    <p className="flex justify-between">
   <span>Federal Tax</span>
   <span>${results.federalTax.toFixed(2)}</span>
  {formatCurrency(results.federalTax)}</p>
