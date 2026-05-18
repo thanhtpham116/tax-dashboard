@@ -5,10 +5,18 @@ import { useState } from "react";
 export default function Home() {
   const [salary, setSalary] = useState("");
   const [results, setResults] = useState(null);
-
+const formatCurrency = (value) => {
+  return value.toLocaleString("en-CA", {
+    style: "currency",
+    currency: "CAD",
+  });
+};
   const calculateTax = () => {
   const income = Number(salary);
-
+if (!salary || income <= 0) {
+  alert("Please enter a valid income.");
+  return;
+}
 let federalTaxRate;
 let quebecTaxRate;
 if (income <= 50000) {
@@ -68,22 +76,22 @@ const quebecTax = income * quebecTaxRate;
     <p className="flex justify-between">
   <span>Federal Tax</span>
   <span>${results.federalTax.toFixed(2)}</span>
- ${results.federalTax.toFixed(2)}</p>
+ {formatCurrency(results.federalTax)}</p>
 
     <p className="flex justify-between">
   <span>Quebec Tax</span>
   <span>${results.quebecTax.toFixed(2)}</span>
- ${results.quebecTax.toFixed(2)}</p>
+ {formatCurrency(results.quebecTax)}</p>
 
     <p className="flex justify-between">
   <span>Total Tax</span>
   <span>${results.totalTax.toFixed(2)}</span>
- ${results.totalTax.toFixed(2)}</p>
+ {formatCurrency(results.totalTax)}</p>
 
     <p className="flex justify-between font-bold text-green-600">
   <span>Net Income</span>
   <span>${results.netIncome.toFixed(2)}</span>
- ${results.netIncome.toFixed(2)}</p>
+ {formatCurrency(results.netIncome)}</p>
   </div>
 )}
 </div>
