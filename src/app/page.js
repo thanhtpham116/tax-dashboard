@@ -1,6 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+} from "recharts";
 
 export default function Home() {
   const [salary, setSalary] = useState("");
@@ -48,6 +56,22 @@ const quebecTax = income * quebecTaxRate;
     netIncome,
   });
 };
+  const chartData = results
+  ? [
+      {
+        name: "Federal Tax",
+        amount: results.federalTax,
+      },
+      {
+        name: "Quebec Tax",
+        amount: results.quebecTax,
+      },
+      {
+        name: "Net Income",
+        amount: results.netIncome,
+      },
+    ]
+  : [];
 
   return (
 <main className="min-h-screen bg-gray-100 flex items-center justify-center p-6">      
@@ -92,6 +116,18 @@ const quebecTax = income * quebecTaxRate;
   <span>Net Income</span>
   <span>${results.netIncome.toFixed(2)}</span>
  {formatCurrency(results.netIncome)}</p>
+  </div>
+)}
+{results && (
+  <div className="w-full h-80 mt-6">
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={chartData}>
+        <XAxis dataKey="name" />
+        <YAxis />
+        <Tooltip />
+        <Bar dataKey="amount" />
+      </BarChart>
+    </ResponsiveContainer>
   </div>
 )}
 </div>
