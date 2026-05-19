@@ -1,8 +1,15 @@
 "use client";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../firebase/config";
-import { useState } from "react";
+import { db } from "../firebase/config";
 import {
+  collection,
+  addDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";import { createUserWithEmailAndPassword } from "firebase/auth";
+import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+import { auth } from "../firebase/config";
+import { useState, useEffect } from "react";import {
   BarChart,
   Bar,
   XAxis,
@@ -12,6 +19,7 @@ import {
 } from "recharts";
 
 export default function Home() {
+  const [history, setHistory] = useState([]);
   const [salary, setSalary] = useState("");
   const [rrsp, setRrsp] = useState("");
   const [results, setResults] = useState(null);
@@ -23,7 +31,7 @@ export default function Home() {
     currency: "CAD",
   });
 };
-  const calculateTax = () => {
+  const calculateTax = async () => {
   const income = Number(salary);
   const rrspContribution = Number(rrsp);
   const taxableIncome = income - rrspContribution;
@@ -47,6 +55,20 @@ if (taxableIncome <= 50000) {
 } else {
   quebecTaxRate = 0.20;
 }
+
+if (auth.currentUser) {
+  await addDoc(collection(db, "taxCalculations"), {
+    uid: auth.currentUser.uid,
+    salary: income,
+    rrsp: rrspContribution,
+    taxableIncome: taxableIncome,
+    federalTax,
+    quebecTax,
+    netIncome,
+    createdAt: new Date()
+  });
+}
+
 const federalTax = taxableIncome * federalTaxRate;
 
 const quebecTax = taxableIncome * quebecTaxRate;
@@ -97,6 +119,47 @@ const handleSignup = async () => {
   }
 };
 
+const handleLogin = async () => {
+  try {
+    await signInWithEmailAndPassword(auth, email, password);
+    alert("Logged in successfully!");
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+const handleLogout = async () => {
+  try {
+    await signOut(auth);
+    alert("Logged out successfully!");
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
+const loadHistory = async () => {
+  if (!auth.currentUser) return;
+
+  const q = query(
+    collection(db, "taxCalculations"),
+    where("uid", "==", auth.currentUser.uid)
+  );
+
+  const querySnapshot = await getDocs(q);
+
+  const historyData = [];
+
+  querySnapshot.forEach((doc) => {
+    historyData.push(doc.data());
+  });
+
+  setHistory(historyData);
+};
+
+useEffect(() => {
+  loadHistory();
+}, [results]);
+
   return (
 <main className="min-h-screen bg-gray-100 flex items-center justify-center p-6">      
   <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md flex flex-col gap-4">
@@ -117,12 +180,28 @@ const handleSignup = async () => {
   onChange={(e) => setPassword(e.target.value)}
   className="border border-gray-300 p-3 rounded-lg w-full text-lg"
 />
+
 <button
   onClick={handleSignup}
   className="bg-blue-600 text-white py-3 rounded-lg text-lg hover:bg-blue-700 transition"
 >
   Sign Up
 </button>
+
+<button
+  onClick={handleLogin}
+  className="bg-green-600 text-white py-3 rounded-lg text-lg hover:bg-green-700 transition mt-2"
+>
+  Log In
+</button>
+
+<button
+  onClick={handleLogout}
+  className="bg-red-600 text-white py-3 rounded-lg text-lg hover:bg-red-700 transition mt-2"
+>
+  Log Out
+</button>
+
       <input
         type="number"
         placeholder="Enter salary"
@@ -144,6 +223,8 @@ const handleSignup = async () => {
       >
         Calculate
       </button>
+
+
 
 {results && (
   <div className="bg-gray-50 rounded-xl p-4 flex flex-col gap-3 text-lg">
@@ -181,6 +262,11 @@ const handleSignup = async () => {
   <span>Net Income</span>
   <span>${results.netIncome.toFixed(2)}</span>
  {formatCurrency(results.netIncome)}</p>
+
+<p className="text-sm text-gray-600 mt-2">
+  Status: {auth.currentUser ? "Logged in" : "Not logged in"}
+</p>
+
   </div>
 )}
 {results && (
@@ -196,6 +282,31 @@ const handleSignup = async () => {
   </div>
 )}
 </div>
+
+<div className="mt-8 w-full">
+  <h2 className="text-2xl font-bold mb-4">
+    Previous Calculations
+  </h2>
+
+  <div className="flex flex-col gap-4">
+    {history.map((item, index) => (
+      <div
+        key={index}
+        className="bg-gray-100 p-4 rounded-xl"
+      >
+        <p>Salary: {formatCurrency(item.salary)}</p>
+
+        <p>RRSP: {formatCurrency(item.rrsp)}</p>
+
+        <p>
+          Net Income:
+          {formatCurrency(item.netIncome)}
+        </p>
+      </div>
+    ))}
+  </div>
+</div>
+
     </main>
   );
 }
