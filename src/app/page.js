@@ -56,17 +56,28 @@ if (taxableIncome <= 50000) {
   quebecTaxRate = 0.20;
 }
 
-if (auth.currentUser) {
-  await addDoc(collection(db, "taxCalculations"), {
-    uid: auth.currentUser.uid,
-    salary: income,
-    rrsp: rrspContribution,
-    taxableIncome: taxableIncome,
-    federalTax,
-    quebecTax,
-    netIncome,
-    createdAt: new Date()
-  });
+try {
+  if (auth.currentUser) {
+    await addDoc(collection(db, "taxCalculations"), {
+      uid: auth.currentUser.uid,
+
+      salary: Number(salary),
+
+      rrsp: Number(rrsp),
+
+      taxableIncome,
+
+      federalTax,
+
+      quebecTax,
+
+      netIncome,
+
+      createdAt: new Date(),
+    });
+  }
+} catch (error) {
+  console.log(error);
 }
 
 const federalTax = taxableIncome * federalTaxRate;
