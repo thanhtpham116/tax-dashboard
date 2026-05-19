@@ -1,5 +1,6 @@
 "use client";
-
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../firebase/config";
 import { useState } from "react";
 import {
   BarChart,
@@ -14,7 +15,9 @@ export default function Home() {
   const [salary, setSalary] = useState("");
   const [rrsp, setRrsp] = useState("");
   const [results, setResults] = useState(null);
-const formatCurrency = (value) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const formatCurrency = (value) => {
   return value.toLocaleString("en-CA", {
     style: "currency",
     currency: "CAD",
@@ -80,13 +83,46 @@ taxSavings,
     ]
   : [];
 
+const handleSignup = async () => {
+  try {
+    await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password
+    );
+
+    alert("Account created successfully!");
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
   return (
 <main className="min-h-screen bg-gray-100 flex items-center justify-center p-6">      
   <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md flex flex-col gap-4">
 <h1 className="text-4xl font-bold text-center text-black">
           Canadian Tax Calculator
       </h1>
-
+<input
+  type="email"
+  placeholder="Enter email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  className="border border-gray-300 p-3 rounded-lg w-full text-lg"
+/>
+<input
+  type="password"
+  placeholder="Enter password"
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  className="border border-gray-300 p-3 rounded-lg w-full text-lg"
+/>
+<button
+  onClick={handleSignup}
+  className="bg-blue-600 text-white py-3 rounded-lg text-lg hover:bg-blue-700 transition"
+>
+  Sign Up
+</button>
       <input
         type="number"
         placeholder="Enter salary"
