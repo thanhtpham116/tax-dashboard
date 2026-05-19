@@ -6,8 +6,13 @@ import {
   getDocs,
   query,
   where,
-} from "firebase/firestore";import { createUserWithEmailAndPassword } from "firebase/auth";
-import { signInWithEmailAndPassword, signOut } from "firebase/auth";
+} from "firebase/firestore";
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+} from "firebase/auth";
 import { auth } from "../firebase/config";
 import { useState, useEffect } from "react";import {
   BarChart,
@@ -75,6 +80,7 @@ try {
 
       createdAt: new Date(),
     });
+    loadHistory();
   }
 } catch (error) {
   console.log(error);
@@ -168,9 +174,14 @@ const loadHistory = async () => {
 };
 
 useEffect(() => {
-  loadHistory();
-}, [results]);
+  const unsubscribe = onAuthStateChanged(auth, (user) => {
+    if (user) {
+      loadHistory();
+    }
+  });
 
+  return () => unsubscribe();
+}, []);
   return (
 <main className="min-h-screen bg-gray-100 flex items-center justify-center p-6">      
   <div className="bg-white p-8 rounded-2xl shadow-lg w-full max-w-md flex flex-col gap-4">
@@ -298,8 +309,9 @@ useEffect(() => {
   <h2 className="text-2xl font-bold mb-4">
     Previous Calculations
   </h2>
-
-  <div className="flex flex-col gap-4">
+{history.length === 0 && (
+  <p>No saved calculations yet.</p>
+)}
     {history.map((item, index) => (
       <div
         key={index}
@@ -316,7 +328,6 @@ useEffect(() => {
       </div>
     ))}
   </div>
-</div>
 
     </main>
   );
