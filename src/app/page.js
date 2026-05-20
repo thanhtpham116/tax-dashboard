@@ -61,6 +61,15 @@ if (taxableIncome <= 50000) {
   quebecTaxRate = 0.20;
 }
 
+const federalTax = taxableIncome * federalTaxRate;
+
+const quebecTax = taxableIncome * quebecTaxRate;
+
+  const totalTax = federalTax + quebecTax;
+
+  const netIncome = income - totalTax;
+  const taxSavings = rrspContribution * 0.25;
+
 try {
   if (auth.currentUser) {
     await addDoc(collection(db, "taxCalculations"), {
@@ -86,15 +95,6 @@ try {
   console.log(error);
 }
 
-const federalTax = taxableIncome * federalTaxRate;
-
-const quebecTax = taxableIncome * quebecTaxRate;
-
-  const totalTax = federalTax + quebecTax;
-
-  const netIncome = income - totalTax;
-  const taxSavings = rrspContribution * 0.25;
-
   setResults({
     taxableIncome,
 rrspContribution,
@@ -104,6 +104,9 @@ taxSavings,
     totalTax,
     netIncome,
   });
+
+await loadHistory();
+
 };
   const chartData = results
   ? [
@@ -155,28 +158,41 @@ const handleLogout = async () => {
 };
 
 const loadHistory = async () => {
-  if (!auth.currentUser) return;
+  try {
+    if (!auth.currentUser) {
+      console.log("No user logged in");
+      return;
+    }
 
-  const q = query(
-    collection(db, "taxCalculations"),
-    where("uid", "==", auth.currentUser.uid)
-  );
+    console.log("Loading history for:", auth.currentUser.uid);
 
-  const querySnapshot = await getDocs(q);
+    const q = query(
+      collection(db, "taxCalculations"),
+      where("uid", "==", auth.currentUser.uid)
+    );
 
-  const historyData = [];
+    const querySnapshot = await getDocs(q);
 
-  querySnapshot.forEach((doc) => {
-    historyData.push(doc.data());
-  });
+    const historyData = [];
 
-  setHistory(historyData);
+    querySnapshot.forEach((doc) => {
+      console.log(doc.data());
+
+      historyData.push(doc.data());
+    });
+
+    console.log("History loaded:", historyData);
+
+    setHistory(historyData);
+
+  } catch (error) {
+    console.log("Firestore error:", error);
+  }
 };
 
 useEffect(() => {
   const unsubscribe = onAuthStateChanged(auth, (user) => {
     if (user) {
-      loadHistory();
     }
   });
 
@@ -261,29 +277,30 @@ useEffect(() => {
   <span>{formatCurrency(results.taxableIncome)}</span>
 </p>
 
-    <p className="flex justify-between">
+<p className="flex justify-between">
   <span>Federal Tax</span>
-  <span>${results.federalTax.toFixed(2)}</span>
- {formatCurrency(results.federalTax)}</p>
+  <span>{formatCurrency(results.federalTax)}</span>
+</p>
 
-    <p className="flex justify-between">
+<p className="flex justify-between">
   <span>Quebec Tax</span>
-  <span>${results.quebecTax.toFixed(2)}</span>
- {formatCurrency(results.quebecTax)}</p>
+  <span>{formatCurrency(results.quebecTax)}</span>
+</p>
 
-    <p className="flex justify-between">
+<p className="flex justify-between">
   <span>Total Tax</span>
-  <span>${results.totalTax.toFixed(2)}</span>
- {formatCurrency(results.totalTax)}</p>
+  <span>{formatCurrency(results.totalTax)}</span>
+</p>
+
  <p className="flex justify-between font-bold text-blue-600">
   <span>Estimated Tax Savings</span>
   <span>{formatCurrency(results.taxSavings)}</span>
 </p>
 
-    <p className="flex justify-between font-bold text-green-600">
+<p className="flex justify-between">
   <span>Net Income</span>
-  <span>${results.netIncome.toFixed(2)}</span>
- {formatCurrency(results.netIncome)}</p>
+  <span>{formatCurrency(results.netIncome)}</span>
+</p>
 
 <p className="text-sm text-gray-600 mt-2">
   Status: {auth.currentUser ? "Logged in" : "Not logged in"}
